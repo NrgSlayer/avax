@@ -1,51 +1,36 @@
 // SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
-/*
-Only contract owner should be able to mint tokens
-Any user can transfer tokens
-Any user can burn tokens
-*/
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-pragma solidity ^0.8.20; 
+contract myToken is ERC20, Ownable {
 
-contract MyToken {
-    string public name = "ASHISH";
-    string public symbol = "ASH";
-    uint256 public totalSupply;
-    address public owner;
+// Only contract owner should be able to mint tokens
+// Any user can transfer tokens
+// Any user can burn tokens
 
-    mapping(address => uint256) public balanceOf;
-    
+    event TokensBurned(address indexed user, uint amount);
+    event TokensMinted(address indexed user, uint amount);
 
-    constructor() {
-        owner = msg.sender;
+    constructor() ERC20("myToken", "TKN") Ownable(msg.sender) {
+        _mint(msg.sender,  1000); 
+        
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Caller is not the owner");
-        _;
+    function mintTokens(address to, uint amount) external onlyOwner {
+        _mint(to, amount);
+        emit TokensMinted(msg.sender, amount);
     }
 
-
-    function mint(address to, uint256 value) public onlyOwner returns (bool) {
-        totalSupply += value;
-        balanceOf[to] += value;
-        return true;
-    }
-
-    function transfer(address to, uint256 value) public returns (bool) {
-        require(balanceOf[msg.sender] >= value, "Insufficient balance");
-        balanceOf[msg.sender] -= value;
-        balanceOf[to] += value;
-        return true;
-    }
-
-     function burn(uint256 value) public returns (bool) {
-        require(balanceOf[msg.sender] >= value, "Insufficient balance");
-        balanceOf[msg.sender] -= value;
-        totalSupply -= value;
-        return true;
+    function burnTokens(uint amount) external {
+        require(balanceOf(msg.sender) >= amount, "Insufficient balance");
+        _burn(msg.sender, amount);
+        emit TokensBurned(msg.sender, amount);
     }
 
 
+    function transferTo(address to, uint amount) external {
+        transfer(to, amount);  
+    }
 }
